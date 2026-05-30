@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -39,6 +39,29 @@ if (typeof window !== "undefined") {
   });
 }
 
+// Sync Firebase Auth user info with localStorage on the client side
+if (typeof window !== "undefined") {
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const userData = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+      };
+      localStorage.setItem("user", JSON.stringify(userData));
+      
+      // Store token
+      user.getIdToken().then((token) => {
+        localStorage.setItem("token", token);
+      });
+    } else {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+    }
+  });
+}
+
 export { app, auth, db, analytics };
 export default app;
+
 
