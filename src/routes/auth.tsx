@@ -6,17 +6,20 @@ import {
   createUserWithEmailAndPassword,
   updateProfile,
   onAuthStateChanged,
+  sendPasswordResetEmail,
 } from "firebase/auth";
+import { Eye, EyeOff } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
 function AuthPage() {
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -42,9 +45,12 @@ function AuthPage() {
           });
         }
         window.location.href = "/landing";
-      } else {
+      } else if (mode === "login") {
         await signInWithEmailAndPassword(auth, email, password);
         window.location.href = "/landing";
+      } else if (mode === "forgot") {
+        await sendPasswordResetEmail(auth, email);
+        setInfo("A password reset link has been sent to your email. Please check your inbox!");
       }
     } catch (err: any) {
       setError(err.message ?? "Something went wrong");
@@ -83,12 +89,14 @@ function AuthPage() {
         <div className="w-full max-w-md">
           <Link to="/" className="text-sm text-emerald-300 hover:text-amber-300">← Home</Link>
           <h2 className="text-3xl font-bold mt-4">
-            {mode === "login" ? "Welcome back" : "Create your account"}
+            {mode === "login" ? "Welcome back" : mode === "signup" ? "Create your account" : "Reset your password"}
           </h2>
           <p className="text-sm text-emerald-200/70 mt-1">
             {mode === "login"
               ? "Sign in to access your trail guides."
-              : "Sign up to start planning your next climb."}
+              : mode === "signup"
+                ? "Sign up to start planning your next climb."
+                : "Enter your email to receive a password reset link."}
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-4">
@@ -115,18 +123,48 @@ function AuthPage() {
                 placeholder="you@trail.com"
               />
             </div>
-            <div>
-              <label className="text-xs uppercase tracking-wider text-emerald-200/70">Password</label>
-              <input
-                type="password"
-                required
-                minLength={1}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 w-full px-3 py-2.5 rounded-md bg-emerald-900/50 border border-emerald-700 focus:outline-none focus:border-amber-400"
-                placeholder="••••••••"
-              />
-            </div>
+            {mode !== "forgot" && (
+              <div>
+                <div className="flex justify-between items-center">
+                  <label className="text-xs uppercase tracking-wider text-emerald-200/70">Password</label>
+                  {mode === "login" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode("forgot");
+                        setError(null);
+                        setInfo(null);
+                      }}
+                      className="text-xs text-amber-300 hover:underline cursor-pointer"
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <div className="relative mt-1">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    minLength={1}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-3 pr-10 py-2.5 rounded-md bg-emerald-900/50 border border-emerald-700 focus:outline-none focus:border-amber-400"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-400 hover:text-amber-300 focus:outline-none cursor-pointer"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
 
             {error && (
               <div className="text-sm text-red-300 bg-red-900/30 border border-red-700/40 rounded p-2">
@@ -142,9 +180,9 @@ function AuthPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-md bg-amber-400 text-emerald-950 font-semibold hover:bg-amber-300 disabled:opacity-50"
+              className="w-full py-3 rounded-md bg-amber-400 text-emerald-950 font-semibold hover:bg-amber-300 disabled:opacity-50 cursor-pointer"
             >
-              {loading ? "Please wait..." : mode === "login" ? "Log in" : "Sign up"}
+              {loading ? "Please wait..." : mode === "login" ? "Log in" : mode === "signup" ? "Sign up" : "Send reset link"}
             </button>
           </form>
 
@@ -152,17 +190,45 @@ function AuthPage() {
             {mode === "login" ? (
               <>
                 No account yet?{" "}
-                <button onClick={() => setMode("signup")} className="text-amber-300 font-semibold hover:underline">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("signup");
+                    setError(null);
+                    setInfo(null);
+                  }}
+                  className="text-amber-300 font-semibold hover:underline cursor-pointer"
+                >
                   Sign up
                 </button>
               </>
-            ) : (
+            ) : mode === "signup" ? (
               <>
                 Already have an account?{" "}
-                <button onClick={() => setMode("login")} className="text-amber-300 font-semibold hover:underline">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode("login");
+                    setError(null);
+                    setInfo(null);
+                  }}
+                  className="text-amber-300 font-semibold hover:underline cursor-pointer"
+                >
                   Log in
                 </button>
               </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setMode("login");
+                  setError(null);
+                  setInfo(null);
+                }}
+                className="text-amber-300 font-semibold hover:underline cursor-pointer"
+              >
+                Back to login
+              </button>
             )}
           </div>
         </div>
