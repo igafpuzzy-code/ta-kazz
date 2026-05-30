@@ -3,6 +3,8 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { auth } from "@/integrations/firebase/client";
 import { onAuthStateChanged } from "firebase/auth";
 import { getMountain } from "@/lib/mountains";
+import ReviewsSection from "@/components/ReviewsSection";
+import PhotoGallery from "@/components/PhotoGallery";
 
 const SingleMap = lazy(() => import("@/components/SingleMountainMap"));
 
@@ -108,6 +110,12 @@ function MountainPage() {
             </Suspense>
           )}
         </section>
+
+        {/* Photo Gallery */}
+        {mounted && <PhotoGallery slug={m.slug} />}
+
+        {/* Reviews */}
+        {mounted && <ReviewsSection slug={m.slug} />}
 
         <div className="mt-12">
           <Link

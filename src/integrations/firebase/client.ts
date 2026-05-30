@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || (typeof process !== "undefined" ? process.env.FIREBASE_API_KEY : undefined),
@@ -23,9 +24,10 @@ if (isMissingConfig && typeof window !== "undefined") {
 // Initialize Firebase App (ensure singleton)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Auth & Firestore
+// Initialize Auth, Firestore & Storage
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 // Safe initialization of Analytics for SSR
 let analytics: any = null;
@@ -61,7 +63,7 @@ if (typeof window !== "undefined") {
   });
 }
 
-export { app, auth, db, analytics };
+export { app, auth, db, storage, analytics };
 export default app;
 
 
