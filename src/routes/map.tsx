@@ -39,7 +39,10 @@ function MapPage() {
     <div className="min-h-screen bg-emerald-950 text-stone-100">
       <nav className="border-b border-emerald-800/40 bg-emerald-950/70 backdrop-blur sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/landing" className="font-bold text-xl">🏔️ TA KAZZ</Link>
+          <Link to="/landing" className="flex items-center gap-2">
+            <img src="/logo.jpg" alt="TA KAZZ Logo" className="h-10 w-10 rounded-full object-cover border border-emerald-700" />
+            <span className="font-bold text-xl">TA KAZZ</span>
+          </Link>
           <Link to="/landing" className="text-sm text-emerald-300 hover:text-amber-300">← Back</Link>
         </div>
       </nav>

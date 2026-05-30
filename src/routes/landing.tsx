@@ -42,8 +42,9 @@ function Landing() {
     <div className="min-h-screen bg-gradient-to-b from-emerald-950 via-emerald-900 to-stone-900 text-stone-100">
       <nav className="border-b border-emerald-800/40 backdrop-blur sticky top-0 z-50 bg-emerald-950/70">
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/landing" className="font-bold text-xl tracking-tight">
-            🏔️ TA KAZZ
+          <Link to="/landing" className="flex items-center gap-2">
+            <img src="/logo.jpg" alt="TA KAZZ Logo" className="h-10 w-10 rounded-full object-cover border border-emerald-700" />
+            <span className="font-bold text-xl tracking-tight">TA KAZZ</span>
           </Link>
           <div className="flex items-center gap-4 text-sm">
             <Link to="/map" className="hover:text-amber-300">Map</Link>
@@ -71,6 +72,7 @@ function Landing() {
           }}
         />
         <div className="relative max-w-6xl mx-auto px-6 py-24 md:py-36">
+          <img src="/logo.jpg" alt="TA KAZZ Logo" className="w-24 h-24 rounded-full object-cover border-4 border-amber-300 shadow-xl mb-6" />
           <h1 className="text-5xl md:text-7xl font-bold leading-tight">
             Welcome back,<br />
             <span className="text-amber-300">explorer.</span>

@@ -67,6 +67,7 @@ function AuthPage() {
         }}
       >
         <div>
+          <img src="/logo.jpg" alt="TA KAZZ Logo" className="w-20 h-20 rounded-full object-cover border-4 border-amber-300 shadow-xl mb-4" />
           <h1 className="text-5xl font-bold leading-tight">
             TA KAZZ
           </h1>
