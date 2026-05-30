@@ -130,21 +130,6 @@ service cloud.firestore {
   }
 }`}
           </pre>
-          <div className="h-px bg-red-800/50 my-2" />
-          <p className="text-xs text-stone-300">
-            And paste the following rules into the <strong>Rules</strong> tab of your <strong>Firebase Storage</strong> bucket:
-          </p>
-          <pre className="p-3 bg-black/40 rounded text-xs text-amber-300/90 overflow-x-auto select-all font-mono">
-{`rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    match /trailPhotos/{trailSlug}/{fileName} {
-      allow read: if true;
-      allow write: if request.auth != null && fileName.startsWith(request.auth.uid);
-    }
-  }
-}`}
-          </pre>
         </div>
       )}
 

@@ -51,7 +51,49 @@ export function subscribeToPhotos(
   );
 }
 
-/** Upload a photo to Firebase Storage and save metadata to Firestore */
+/** Helper to resize and compress image to base64 string */
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Compress to JPEG with 0.7 quality
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+        resolve(dataUrl);
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+}
+
+/** Upload a photo directly to Firestore as a compressed Base64 string */
 export async function uploadTrailPhoto(
   slug: string,
   file: File,
@@ -60,39 +102,23 @@ export async function uploadTrailPhoto(
   const user = auth.currentUser;
   if (!user) throw new Error("Not authenticated");
 
-  const path = `trailPhotos/${slug}/${user.uid}_${Date.now()}_${file.name}`;
-  const storageRef = ref(storage, path);
+  if (onProgress) onProgress(20);
+  const compressedBase64 = await compressImage(file);
+  if (onProgress) onProgress(70);
 
-  return new Promise((resolve, reject) => {
-    const task = uploadBytesResumable(storageRef, file);
-    task.on(
-      "state_changed",
-      (snapshot) => {
-        const pct = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-        );
-        if (onProgress) onProgress(pct);
-      },
-      reject,
-      async () => {
-        const url = await getDownloadURL(task.snapshot.ref);
-        await addDoc(collection(db, "trailPhotos"), {
-          trailSlug: slug,
-          userId: user.uid,
-          userName: user.displayName || user.email || "Hiker",
-          photoUrl: url,
-          storagePath: path,
-          createdAt: serverTimestamp(),
-        });
-        resolve();
-      }
-    );
+  await addDoc(collection(db, "trailPhotos"), {
+    trailSlug: slug,
+    userId: user.uid,
+    userName: user.displayName || user.email || "Hiker",
+    photoUrl: compressedBase64,
+    storagePath: "base64",
+    createdAt: serverTimestamp(),
   });
+
+  if (onProgress) onProgress(100);
 }
 
-/** Delete a photo from Firebase Storage and Firestore */
+/** Delete a photo from Firestore */
 export async function deleteTrailPhoto(photo: TrailPhoto): Promise<void> {
-  const storageRef = ref(storage, photo.storagePath);
-  await deleteObject(storageRef);
   await deleteDoc(doc(db, "trailPhotos", photo.id));
 }
