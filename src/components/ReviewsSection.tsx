@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { auth } from "@/integrations/firebase/client";
+import { onAuthStateChanged } from "firebase/auth";
 import {
   subscribeToReviews,
   addReview,
@@ -49,10 +50,18 @@ function StarDisplay({ value }: { value: number }) {
 }
 
 export default function ReviewsSection({ slug }: { slug: string }) {
-  const uid = auth.currentUser?.uid ?? null;
+  const [uid, setUid] = useState<string | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Track auth state client-side to avoid SSR hydration mismatch
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setUid(user?.uid ?? null);
+    });
+    return unsub;
+  }, []);
 
   // form state
   const [rating, setRating] = useState(5);

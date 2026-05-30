@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { auth } from "@/integrations/firebase/client";
+import { onAuthStateChanged } from "firebase/auth";
 import {
   subscribeToPhotos,
   uploadTrailPhoto,
@@ -8,10 +9,18 @@ import {
 } from "@/lib/photos";
 
 export default function PhotoGallery({ slug }: { slug: string }) {
-  const uid = auth.currentUser?.uid ?? null;
+  const [uid, setUid] = useState<string | null>(null);
   const [photos, setPhotos] = useState<TrailPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Track auth state client-side to avoid SSR hydration mismatch
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setUid(user?.uid ?? null);
+    });
+    return unsub;
+  }, []);
 
   // upload state
   const fileRef = useRef<HTMLInputElement>(null);
