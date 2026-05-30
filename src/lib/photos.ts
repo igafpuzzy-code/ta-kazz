@@ -31,16 +31,24 @@ export type TrailPhoto = {
 /** Subscribe to real-time photos for a given trail slug */
 export function subscribeToPhotos(
   slug: string,
-  cb: (photos: TrailPhoto[]) => void
+  cb: (photos: TrailPhoto[]) => void,
+  errCb?: (err: Error) => void
 ) {
   const q = query(
     collection(db, "trailPhotos"),
     where("trailSlug", "==", slug),
     orderBy("createdAt", "desc")
   );
-  return onSnapshot(q, (snap) => {
-    cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as TrailPhoto)));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as TrailPhoto)));
+    },
+    (err) => {
+      console.error("Firestore subscription error for photos:", err);
+      if (errCb) errCb(err);
+    }
+  );
 }
 
 /** Upload a photo to Firebase Storage and save metadata to Firestore */

@@ -11,6 +11,7 @@ export default function PhotoGallery({ slug }: { slug: string }) {
   const uid = auth.currentUser?.uid ?? null;
   const [photos, setPhotos] = useState<TrailPhoto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // upload state
   const fileRef = useRef<HTMLInputElement>(null);
@@ -26,10 +27,20 @@ export default function PhotoGallery({ slug }: { slug: string }) {
   const [lightbox, setLightbox] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsub = subscribeToPhotos(slug, (data) => {
-      setPhotos(data);
-      setLoading(false);
-    });
+    const unsub = subscribeToPhotos(
+      slug,
+      (data) => {
+        setPhotos(data);
+        setLoading(false);
+        setErrorMsg(null);
+      },
+      (err) => {
+        setLoading(false);
+        setErrorMsg(
+          "Permission denied. Make sure to configure your Firebase Firestore security rules for the 'trailPhotos' collection."
+        );
+      }
+    );
     return unsub;
   }, [slug]);
 
@@ -93,6 +104,49 @@ export default function PhotoGallery({ slug }: { slug: string }) {
           </label>
         )}
       </div>
+
+      {errorMsg && (
+        <div className="mb-6 rounded-xl bg-red-900/20 border border-red-800/50 p-5 text-sm text-red-200 space-y-2">
+          <p className="font-bold flex items-center gap-2 text-red-400">
+            ⚠️ {errorMsg}
+          </p>
+          <p className="text-xs text-stone-300">
+            To resolve this error and enable photo sharing, please paste the following rules into the <strong>Rules</strong> tab of your <strong>Cloud Firestore</strong> database in the Firebase Console:
+          </p>
+          <pre className="p-3 bg-black/40 rounded text-xs text-amber-300/90 overflow-x-auto select-all font-mono">
+{`rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    match /trailPhotos/{photoId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+  }
+}`}
+          </pre>
+          <div className="h-px bg-red-800/50 my-2" />
+          <p className="text-xs text-stone-300">
+            And paste the following rules into the <strong>Rules</strong> tab of your <strong>Firebase Storage</strong> bucket:
+          </p>
+          <pre className="p-3 bg-black/40 rounded text-xs text-amber-300/90 overflow-x-auto select-all font-mono">
+{`rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /trailPhotos/{trailSlug}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null && fileName.startsWith(request.auth.uid);
+    }
+  }
+}`}
+          </pre>
+        </div>
+      )}
 
       {/* Upload progress bar */}
       {uploading && (

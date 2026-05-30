@@ -27,16 +27,24 @@ export type Review = {
 /** Subscribe to real-time reviews for a given trail slug */
 export function subscribeToReviews(
   slug: string,
-  cb: (reviews: Review[]) => void
+  cb: (reviews: Review[]) => void,
+  errCb?: (err: Error) => void
 ) {
   const q = query(
     collection(db, "reviews"),
     where("trailSlug", "==", slug),
     orderBy("createdAt", "desc")
   );
-  return onSnapshot(q, (snap) => {
-    cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Review)));
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Review)));
+    },
+    (err) => {
+      console.error("Firestore subscription error for reviews:", err);
+      if (errCb) errCb(err);
+    }
+  );
 }
 
 /** Create a new review */
