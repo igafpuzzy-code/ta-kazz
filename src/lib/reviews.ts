@@ -47,6 +47,27 @@ export function subscribeToReviews(
   );
 }
 
+/** Subscribe to all real-time reviews across all trails */
+export function subscribeToAllReviews(
+  cb: (reviews: Review[]) => void,
+  errCb?: (err: Error) => void
+) {
+  const q = query(
+    collection(db, "reviews"),
+    orderBy("createdAt", "desc")
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as Review)));
+    },
+    (err) => {
+      console.error("Firestore subscription error for all reviews:", err);
+      if (errCb) errCb(err);
+    }
+  );
+}
+
 /** Create a new review */
 export async function addReview(slug: string, rating: number, comment: string) {
   const user = auth.currentUser;

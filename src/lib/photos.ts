@@ -51,6 +51,27 @@ export function subscribeToPhotos(
   );
 }
 
+/** Subscribe to all real-time photos across all trails */
+export function subscribeToAllPhotos(
+  cb: (photos: TrailPhoto[]) => void,
+  errCb?: (err: Error) => void
+) {
+  const q = query(
+    collection(db, "trailPhotos"),
+    orderBy("createdAt", "desc")
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as TrailPhoto)));
+    },
+    (err) => {
+      console.error("Firestore subscription error for all photos:", err);
+      if (errCb) errCb(err);
+    }
+  );
+}
+
 /** Helper to resize and compress image to base64 string */
 function compressImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
