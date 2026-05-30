@@ -27,7 +27,7 @@ function Landing() {
   const [allReviewsLoading, setAllReviewsLoading] = useState(true);
   const [allPhotos, setAllPhotos] = useState<TrailPhoto[]>([]);
   const [allPhotosLoading, setAllPhotosLoading] = useState(true);
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxPhoto, setLightboxPhoto] = useState<TrailPhoto | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -312,7 +312,7 @@ function Landing() {
                       src={p.photoUrl}
                       alt={`Hiker upload by ${p.userName}`}
                       className="w-full h-full object-cover cursor-pointer transition duration-300 group-hover:scale-105 group-hover:brightness-75"
-                      onClick={() => setLightboxUrl(p.photoUrl)}
+                      onClick={() => setLightboxPhoto(p)}
                     />
                     <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition flex flex-col justify-end p-3 bg-gradient-to-t from-black/85 via-black/30 to-transparent">
                       <p className="text-xs text-white font-semibold truncate flex items-center gap-1">
@@ -355,18 +355,55 @@ function Landing() {
       </section>
 
       {/* Lightbox Modal */}
-      {lightboxUrl && (
+      {lightboxPhoto && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 cursor-zoom-out animate-fade-in"
-          onClick={() => setLightboxUrl(null)}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 animate-fade-in"
+          onClick={() => setLightboxPhoto(null)}
         >
-          <img
-            src={lightboxUrl}
-            alt="Hiker shared preview"
-            className="max-w-4xl max-h-[90vh] w-full object-contain rounded-xl shadow-2xl p-4"
-          />
+          {/* Main Container */}
+          <div className="relative max-w-4xl max-h-[85vh] w-full flex flex-col items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={lightboxPhoto.photoUrl}
+              alt={`Shared by ${lightboxPhoto.userName}`}
+              className="max-w-full max-h-[75vh] object-contain rounded-xl shadow-2xl border border-emerald-950"
+            />
+            
+            {/* Info and Action Bar */}
+            <div className="mt-4 w-full max-w-xl bg-emerald-950/90 border border-emerald-800/40 rounded-xl p-4 flex items-center justify-between shadow-lg backdrop-blur">
+              <div className="text-left">
+                <p className="text-xs uppercase tracking-wider text-emerald-300">Shared by</p>
+                <p className="text-sm font-semibold text-stone-100 mt-0.5">{lightboxPhoto.userName}</p>
+                {getMountain(lightboxPhoto.trailSlug) && (
+                  <p className="text-xs text-amber-300 mt-0.5">📍 {getMountain(lightboxPhoto.trailSlug)?.name}</p>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                {lightboxPhoto.userId === uid && (
+                  <button
+                    onClick={async () => {
+                      if (confirm("Are you sure you want to delete this photo?")) {
+                        await deleteTrailPhoto(lightboxPhoto);
+                        setLightboxPhoto(null);
+                      }
+                    }}
+                    className="px-4 py-2 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-500 text-white transition shadow cursor-pointer"
+                  >
+                    🗑️ Delete Photo
+                  </button>
+                )}
+                <button
+                  onClick={() => setLightboxPhoto(null)}
+                  className="px-4 py-2 text-xs font-semibold rounded-lg border border-emerald-700 text-emerald-200 hover:bg-emerald-800/40 transition cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+          
           <button
-            onClick={() => setLightboxUrl(null)}
+            onClick={() => setLightboxPhoto(null)}
             className="absolute top-6 right-6 text-white text-3xl font-bold hover:text-amber-400 cursor-pointer"
           >
             ✕
